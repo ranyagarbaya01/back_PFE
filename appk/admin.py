@@ -6,6 +6,11 @@ from django.contrib import admin
 # admin.site.register(medecin)
 from .models import *
 
+
+#User = get_user_model()
+
+
+
 admin.site.register(Patient)
 admin.site.register(Pharmacie)
 admin.site.register(Livreur)

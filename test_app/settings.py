@@ -24,11 +24,8 @@ SECRET_KEY = 'django-insecure-m&kbj@*$x*b*(@8lr2l8=vy67bt+)@_k8oop9mp%cgg5s(!&w=
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
+#IP_ADDRESS = "HERE_WILL_BE_THE_IP_ADDRESS"
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '10.0.2.2' , '192.168.1.140']
-
-
-# Application definition
 
 INSTALLED_APPS = [
     'django.contrib.sites',
@@ -39,18 +36,18 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'appk',
+     'knox',
     'rest_framework',
     'corsheaders',
     'django_extensions',
     #auth apps
     'rest_framework.authtoken',
-    'dj_rest_auth',
+   
     #register
     
-    'allauth', 
-    'allauth.account',  
-    'allauth.socialaccount',
-    'dj_rest_auth.registration',
+
+   # "allauth.socialaccount.providers.google",
+    
 
 ]
 SITE_ID = 1
@@ -63,22 +60,17 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'corsheaders.middleware.CorsMiddleware',
-    'allauth.account.middleware.AccountMiddleware',
 ]
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:4200',
-    'http://localhost:3000',
+    'http://localhost:54808',
     
     # Add other allowed origins if necessary
 ]
 
-CORS_ORIGIN_WHITELIST = [
-    'http://*',
-    'https://*',
-]
+
 
 ROOT_URLCONF = 'test_app.urls'
 
@@ -153,5 +145,4 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-Auth_USER_MODEL = 'appk.Patient'
 

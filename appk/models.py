@@ -2,14 +2,30 @@ from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User
 
+#notification model
+class Notification(models.Model):
+    patient = models.ForeignKey('Patient', on_delete=models.CASCADE, default="")
+    pharmacie = models.ForeignKey('Pharmacie', on_delete=models.CASCADE, default="")
+    commande = models.ForeignKey('Commande', on_delete=models.CASCADE, default="")
+    message = models.CharField(max_length=100)
+    read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return self.message
+
+
+
 # pharmacie model
 class Pharmacie (models.Model):
     user=models.OneToOneField(User, on_delete=models.CASCADE, default="")
     email=models.CharField(max_length=50)
     heure_ouv=models.DateTimeField(default=timezone.now)
     heure_ferm=models.DateTimeField(default=timezone.now)
-    adresse=models.CharField(max_length=50, default="")
+    adresse=models.CharField(max_length=50, default="", blank=True, null=True)
     medicament=models.ManyToManyField('Medicament', through='Pharma_Stock_Medic', related_name='medicament')
+    role=models.CharField(max_length=30, default="pharmacie", blank=True, null=True) 
+
 
 # medicament model
 class Medicament (models.Model):
@@ -19,7 +35,6 @@ class Medicament (models.Model):
     nompharmacie=models.CharField(max_length=30, default="")
     prix=models.FloatField(default=0)
     temps_liv=models.DateTimeField(default=timezone.now)
-
     quantite = models.IntegerField(default=0)   # stock = stock - qnt
 
     def __str__(self):
@@ -39,13 +54,17 @@ class Patient (models.Model):
     adresse=models.CharField(max_length=30)
     num=models.IntegerField(blank=True, null=True)
     email=models.CharField(max_length=50)
+    role=models.CharField(max_length=30, default="patient")
     
 # livreur model
 class Livreur  (models.Model): 
     user=models.OneToOneField(User, on_delete=models.CASCADE, default="")
-    email=models.CharField(max_length=50)   
+    nom=models.CharField(max_length=30, default="")
+    prenom=models.CharField(max_length=30, default="")
+    num=models.IntegerField(blank=True, null=True)
+    email=models.CharField(max_length=50, default="")   
     commande=models.ManyToManyField('Commande', through='Livraison', related_name='commande', default="")
-    
+    role=models.CharField(max_length=30, default="livreur")
 # categorie model   
 class Categorie (models.Model):
    nom=models.CharField(max_length=30, default="")
@@ -73,16 +92,12 @@ class Ligne_Commande(models.Model):
 
 # livraison model
 class Livraison (models.Model):
+    id_livraison = models.AutoField(primary_key=True)
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, default="")
-    orderStatus = models.CharField(max_length=50, default="")
+    orderStatus = models.CharField(max_length=50, default="en livraison")
     confirmationcode = models.IntegerField(blank=True, null=True)
     # Add foreign keys to Livreur and Commande
     livreur = models.ForeignKey(Livreur, on_delete=models.CASCADE, related_name='livraisons_livreur', default="")
     commande = models.ForeignKey(Commande, on_delete=models.CASCADE, related_name='livraisons_commande', default="")
 
 
-    
-
-
-
- 

@@ -9,6 +9,20 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ('id','username','password','is_active')
         extra_kwargs = {'password': {'write_only': True}}
+       
+
+
+
+        
+
+# User Serializer
+class UserSerializerLogin(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id','username','password')
+        extra_kwargs = {'password': {'write_only': True}}
+
+
 
 # medicament Serializer
 class MedicamentSerializer(serializers.ModelSerializer):
@@ -29,11 +43,20 @@ class PharmacieSerializer(serializers.ModelSerializer):
         model = Pharmacie
         fields = ('__all__')
 
+
+
     def create(self, validated_data):
-        user_data = validated_data.pop('user')
-        user = UserSerializer.create(UserSerializer(), validated_data=user_data)
-        pharmacie = Pharmacie.objects.create(user=user, **validated_data)
-        return pharmacie
+            user_data = validated_data.pop('user')
+            user = User.objects.create_user(**user_data)
+            pharmacie = Pharmacie.objects.create(user=user, **validated_data)
+            return pharmacie
+
+
+class PharmacieSerializerUpdate(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    class Meta:
+        model = Pharmacie
+        fields = ('__all__')
     
 # Pharma_Stock_Medic Serializer
 class Pharma_Stock_MedicSerializer(serializers.ModelSerializer):
@@ -49,12 +72,12 @@ class PatientSerializer(serializers.ModelSerializer):
         model = Patient
         fields = ('__all__') 
 
-        
     def create(self, validated_data):
-        user_data = validated_data.pop('user')
-        user = UserSerializer.create(UserSerializer(), validated_data=user_data)
-        patient = Patient.objects.create(user=user, **validated_data)
-        return patient
+            user_data = validated_data.pop('user')
+            user = User.objects.create_user(**user_data)
+            patient = Patient.objects.create(user=user, **validated_data)
+            return patient
+        
 
 # reserver medicament Serializer
 class ReserverMadicmSerializer(serializers.ModelSerializer):
@@ -95,9 +118,10 @@ class CommandeWithMedicamsSerializer(serializers.ModelSerializer):
 
 # Ligne_Commande Serializer
 class Ligne_CommandeSerializer(serializers.ModelSerializer):
+    MedicamentName = serializers.CharField(source='medicament.nom', read_only=True)
     class Meta:
         model = Ligne_Commande
-        fields = ('__all__')
+        fields = ('medicament','MedicamentName', 'qnt', 'commande')
     
 # Livreur Serializer
 class LivreurSerializer(serializers.ModelSerializer):
@@ -106,11 +130,12 @@ class LivreurSerializer(serializers.ModelSerializer):
         model = Livreur
         fields = ('__all__')
     
+ 
     def create(self, validated_data):
-        user_data = validated_data.pop('user')
-        user = UserSerializer.create(UserSerializer(), validated_data=user_data)
-        livreur = Livreur.objects.create(user=user, **validated_data)
-        return livreur
+            user_data = validated_data.pop('user')
+            user = User.objects.create_user(**user_data)
+            livreur = Livreur.objects.create(user=user, **validated_data)
+            return livreur
  
 # Commande Serializer
 class CommandeSerializer(serializers.ModelSerializer):
@@ -126,7 +151,7 @@ class LivraisonSerializer(serializers.ModelSerializer):
     patientAddress = serializers.CharField(source='patient.adresse', read_only=True)
     class Meta:
         model = Livraison
-        fields = ('patient', 'patientName', 'patientFamilyName', 'patientPhone', 'patientAddress', 'orderStatus', 'confirmationcode', 'livreur', 'commande')
+        fields = ('id_livraison', 'patient', 'patientName', 'patientFamilyName', 'patientPhone', 'patientAddress', 'orderStatus', 'confirmationcode', 'livreur', 'commande')
     
 
 

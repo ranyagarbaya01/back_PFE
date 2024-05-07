@@ -36,9 +36,17 @@ urlpatterns = [
     path('livreurs/', LivreurListCreateAPIView.as_view(), name='livreur-list-create'),
      path('commandes/', CommandeListCreateAPIView.as_view(), name='commande-list-create'),
     path('livraisons/', LivraisonListCreateAPIView.as_view(), name='livraison-list-create'),
-    # views of register and login
+    # views of register and login patient
     path('patients/register/', PatientRegistreListView.as_view(), name='patient-register'),
-    path('patients/login/', PatientLoginView.as_view(), name='patient-login'),
+    path('patients/test/login', PatientLoginView.as_view(), name='patient-login'),
+    # views of register and login livreur
+    path('livreurs/register/', LivreurRegistreListView.as_view(), name='livreur-register'),
+    
+
+    path('pharmacie/register/', PharmacieRegistreListView.as_view(), name='PharmacieRegistreListView'),
+
+
+    
     # views of commandemedic
     path('commandemedic/', CommandeWithMedicmCreateView.as_view(), name='CommandeWithMedicmCreateView'),
     # views of categories
@@ -77,9 +85,13 @@ urlpatterns = [
     path('livraisonlist/<int:pk>/', LivraisonDetailView.as_view()),
     path('livraisonlist/', LivraisonDetailView.as_view()),
     path('delete_all_livraisons/', delete_all_livraisons, name='delete_all_livraisons'),
+    path('Login_gn/', Login_gn.as_view(), name='Login_gn'),
+   
+
+    
+
 
     # path('', urls),
 ] + static(settings.MEDIA_URL, document_root= settings.MEDIA_ROOT)
  
     
-    #path('ordonnances/', OrdonnanceListCreateAPIView.as_view(), name='ordonnance-list-create'),
