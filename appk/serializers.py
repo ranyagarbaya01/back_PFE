@@ -81,9 +81,10 @@ class PatientSerializer(serializers.ModelSerializer):
 
 # reserver medicament Serializer
 class ReserverMadicmSerializer(serializers.ModelSerializer):
+    medicament = MedicamentSerializer(read_only=True)
     class Meta:
         model = Ligne_Commande
-        fields = ('medicament', 'qnt')
+        fields = ('medicament', 'qnt', 'pharmacielocation', 'confirmadresse')
 
 # commande with medicament Serializer
 class CommandeWithMedicamsSerializer(serializers.ModelSerializer):
@@ -106,9 +107,17 @@ class CommandeWithMedicamsSerializer(serializers.ModelSerializer):
     def get_patient_nom(self, obj):
         return obj.patient.nom  
 
-
     def create(self, validated_data):
+        # set the patient as the currently authenticated user's patient
+        try:
+            validated_data['patient'] = self.context['request'].user.patient
+        except:
+            raise serializers.ValidationError("User is not authenticated or does not have a patient profile.")
+            
+        # mabda2eyan hedhi normalement t7otlek el user li aamel login ka patient ama jareb sa3a khadem el token w dima aamel print el request.user 7ata yaatik el user berasmi mch anonymous user
+        # lahne kaed ydetecti fih ANONYMOUSuser, maaneha user mch 3amel authentification, ya3ni el token bch ydetecti feha men aslou, fama method kifeh lazem taadeha fel request. ena bch nhawel taw nkhadem fazet el token hak rit kifeh kaed nabaath feha triglet triglet snn gedha enty chouf kifeh(tnjm testaamel packagae mtaa auth ashhellek, snn mbaed hedheka lazmek trodo ysajel el patient mta3 el commande 3la asses el user eli 7alel taw session....)
         reserved_medicmss_data = validated_data.pop('reservations')
+        print(validated_data)
         commande = Commande.objects.create(**validated_data)
 
         for reserved_medicm_data in reserved_medicmss_data:

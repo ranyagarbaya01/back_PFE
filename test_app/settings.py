@@ -27,6 +27,8 @@ DEBUG = True
 #IP_ADDRESS = "HERE_WILL_BE_THE_IP_ADDRESS"
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '10.0.2.2' , '192.168.1.140']
 
+
+
 INSTALLED_APPS = [
     'django.contrib.sites',
     'django.contrib.admin',
@@ -62,6 +64,14 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
 ]
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        # Add other authentication classes if needed
+    ],
+    # Other DRF settings...
+}
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:4200',
@@ -69,6 +79,11 @@ CORS_ALLOWED_ORIGINS = [
     
     # Add other allowed origins if necessary
 ]
+
+# CORS_ORIGIN_WHITELIST = [
+#     "http://localhost:4200",
+#     # other trusted origins...
+# ]
 
 
 

@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render,get_object_or_404
 from rest_framework import generics,status
 from rest_framework.response import Response
 from appk.models import *
@@ -16,6 +16,8 @@ from rest_framework.views import APIView
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from rest_framework.decorators import api_view
+
 
 # Creating and getting all categories
 class CategorieListCreateAPIView(generics.ListCreateAPIView):
@@ -87,9 +89,8 @@ def delete_all_pharmastock(request):
 
 # Creating and getting all patients
 class PatientListCreateAPIView(generics.ListCreateAPIView):
-    queryset = Patient.objects.all()
+    queryset =   Patient.objects.all()
     serializer_class = PatientSerializer
-    
 # getting a single patient by its ID, updating and deleting a shoe
 class PatientDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Patient.objects.all()
@@ -169,35 +170,6 @@ def delete_all_livraisons(request):
 
 
 
-
-
-
-# patient login
-
-class PatientLoginView(generics.CreateAPIView):
-    serializer_class = UserSerializerLogin
-    aserializer_class = PatientSerializer
-    def post(self, request, *args, **kwargs):
-        username = request.data.get('username')
-        password = request.data.get('password')
-        if not username or not password:
-            return Response({'detail': 'Please provide both username and password.'}, status=status.HTTP_400_BAD_REQUEST)
-        user = authenticate(username=username, password=password)
-        print(user)
-        if user is not None:  
-            token = AuthToken.objects.create(user)
-            return Response({
-                'token': token[1],
-                'user': self.aserializer_class(user.patient).data,
-            }, status=status.HTTP_200_OK)
-        else:
-            return Response({'detail': 'Invalid credentials.'}, status=status.HTTP_401_UNAUTHORIZED)
-
-
-
-
-
-
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework import status
@@ -210,11 +182,10 @@ class Login_gn(APIView):
     mserializer_class = LivreurSerializer
     phserializer_class=PharmacieSerializer
 
-   
+
     def post(self, request, *args, **kwargs):
         username = request.data.get('username')
         password = request.data.get('password')
-
         if not username or not password:
             return Response({'detail': 'Please provide both username and password.'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -224,7 +195,8 @@ class Login_gn(APIView):
             if not user.is_active:
                 return Response({'detail': 'Your account is not activated yet. Please contact the admin.'}, status=status.HTTP_401_UNAUTHORIZED)
 
-            token = AuthToken.objects.create(user)
+            # token = AuthToken.objects.create(user)
+            token, created = Token.objects.get_or_create(user=user)
 
             # Choix du serializer en fonction du type de l'utilisateur
             if hasattr(user, 'patient'):
@@ -235,72 +207,15 @@ class Login_gn(APIView):
                 serializer = self.phserializer_class(user.pharmacie)
             else:
                 return Response({'detail': 'Invalid user type.'}, status=status.HTTP_400_BAD_REQUEST)
-
+            print(token.key)
             return Response({
-                'token': token[1],
+                'token': token.key,
                 'user': serializer.data,
+                
             }, status=status.HTTP_200_OK)
         else:
             return Response({'detail': 'Invalid credentials.'}, status=status.HTTP_401_UNAUTHORIZED)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# patient login
-
-class PatientLoginViewj(generics.CreateAPIView):
-    serializer_class = UserSerializer
-    permission_classes = [AllowAny]
-
-    def post(self, request, *args, **kwargs):
-        username = request.data.get('username')
-        password = request.data.get('password')
-        if not username or not password:
-            return Response({'detail': 'Please provide both email and password.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        user = authenticate(request, username=username, password=password)
-
-        if user is None:
-            return Response({'detail': 'Invalid credentials.'}, status=status.HTTP_401_UNAUTHORIZED)
-
-        try:
-            patient = Patient.objects.get(user=user)
-        except Patient.DoesNotExist:
-            return Response({'detail': 'No patient associated with this user.'}, status=status.HTTP_404_NOT_FOUND)
-
-        #Assuming you have a token authentication system for patients
-        token = AuthToken.objects.create(user)
-
-        return Response({
-            'token': token[1],
-            'patient': self.get_serializer(patient).data,}, status=status.HTTP_200_OK)
-      
-
-# patient register
-class PatientRegistreListView(generics.ListCreateAPIView):
-    queryset = Patient.objects.all()
-    serializer_class = PatientSerializer
-    # permission_classes = [IsAuthenticated]
-    permission_classes = [AllowAny]
 
 
 # pass command with medicament
@@ -309,6 +224,11 @@ class CommandeWithMedicmCreateView(generics.ListCreateAPIView):
     serializer_class = CommandeWithMedicamsSerializer
 
     def perform_create(self, serializer):
+        print("test------------------")
+        print("Sent data:", self.request.data)
+        print("Current authenticated user:", self.request.user)
+        headers = self.request.META
+        print(headers)
         commande = serializer.save()
         # Récupérer les données de réservation de medicm
         medicmss_data = self.request.data.get('reservations', [])
@@ -319,7 +239,8 @@ class CommandeWithMedicmCreateView(generics.ListCreateAPIView):
         for medicm_data in medicmss_data:
             medicament_id = medicm_data.get('medicament')
             quantity = medicm_data.get('qnt')
-            #medicamentname = medicm_data.get('MedicamentName')
+            # confirmadresse = medicm_data.get('confirmadresse')
+            # pharmacielocation = medicm_data.get('pharmacielocation')
             medicament = Medicament.objects.get(id=medicament_id)
             if medicament.quantite >= quantity:
                 medicament.quantite -= quantity
@@ -332,6 +253,14 @@ class CommandeWithMedicmCreateView(generics.ListCreateAPIView):
         return Response({'commande': serializer.data, 'reservations': created_reservations}, status=status.HTTP_201_CREATED)
 
 
+# patient register
+class PatientRegistreListView(generics.ListCreateAPIView):
+    queryset = Patient.objects.all()
+    serializer_class = PatientSerializer
+    # permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
+
+
 # Livreur register
 class LivreurRegistreListView(generics.ListCreateAPIView):
     queryset = Livreur.objects.all()
@@ -339,13 +268,134 @@ class LivreurRegistreListView(generics.ListCreateAPIView):
     # permission_classes = [IsAuthenticated]
 
 
-# Livreur register
+# pharmacie register
 class PharmacieRegistreListView(generics.ListCreateAPIView):
     queryset = Pharmacie.objects.all()
     serializer_class = PharmacieSerializer
     # permission_classes = [IsAuthenticated]
 
+@api_view(['GET'])
+def Command_by_user(request, user_id):
+    try:
+        commande = Commande.objects.filter(patient=user_id)
+        serializer = CommandeWithMedicamsSerializer(commande, many=True)
+        return Response(serializer.data, status=200)
+    except Commande.DoesNotExist:
+        return Response({'message': 'No Commande requests found for the specified user ID.'}, status=404)
+    except Exception as e:
+        return Response({'message': str(e)}, status=500)
 
+
+@api_view(['GET'])
+def Livreur_by_command(request, command_id):
+    try:
+        livreur = Livreur.objects.filter(commande=command_id)
+        serializer = LivreurSerializer(livreur, many=True)
+        return Response(serializer.data, status=200)
+    except Livreur.DoesNotExist:
+        return Response({'message': 'No livreur requests found for the specified command ID.'}, status=404)
+    except Exception as e:
+        return Response({'message': str(e)}, status=500)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# from rest_framework_simplejwt.tokens import AccessToken # type: ignore
+
+# def decode_jwt_token(jwt_token):
+#     try:
+#         # Décodez le jeton en utilisant la méthode de la bibliothèque JWT
+#         decoded_token = AccessToken(jwt_token)
+        
+#         # Récupérez les informations utiles du jeton décodé
+#         user_id = decoded_token.payload['user_id']
+#         user_username = decoded_token.payload['username']
+#         user_role = decoded_token.payload['role']  # Si vous avez stocké le rôle dans le jeton
+        
+#         # Vous pouvez ajouter d'autres informations nécessaires
+        
+#         return {
+#             'user_id': user_id,
+#             'username': user_username,
+#             'role': user_role,
+#             # Ajoutez d'autres clés si nécessaire
+#         }
+#     except Exception as e:
+#         # Gérer les erreurs de décodage ou d'autres exceptions
+#         print("Erreur lors du décodage du jeton:", e)
+#         return None
+
+# patient login
+
+# class PatientLoginViewj(generics.CreateAPIView):
+#     serializer_class = UserSerializer
+#     permission_classes = [AllowAny]
+
+#     def post(self, request, *args, **kwargs):
+#         username = request.data.get('username')
+#         password = request.data.get('password')
+#         if not username or not password:
+#             return Response({'detail': 'Please provide both email and password.'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         user = authenticate(request, username=username, password=password)
+
+#         if user is None:
+#             return Response({'detail': 'Invalid credentials.'}, status=status.HTTP_401_UNAUTHORIZED)
+
+#         try:
+#             patient = Patient.objects.get(user=user)
+#         except Patient.DoesNotExist:
+#             return Response({'detail': 'No patient associated with this user.'}, status=status.HTTP_404_NOT_FOUND)
+
+#         #Assuming you have a token authentication system for patients
+#         token = AuthToken.objects.create(user)
+
+#         return Response({
+#             'token': token[1],
+#             'patient': self.get_serializer(patient).data,}, status=status.HTTP_200_OK)
+      
+
+
+
+
+# pass command with medicament
+# class CommandeWithMedicmCreateView(generics.ListCreateAPIView):
+#     queryset = Commande.objects.all()
+#     serializer_class = CommandeWithMedicamsSerializer
+
+#     def perform_create(self, serializer):
+#         commande = serializer.save()
+#         # Récupérer les données de réservation de medicm
+#         medicmss_data = self.request.data.get('reservations', [])
+#         # Utiliser un ensemble pour stocker les meddic déjà réservés
+#         reserved_medicm_set = set()
+#         # Créer les réservations de medicm associées à commande
+#         created_reservations = []
+#         for medicm_data in medicmss_data:
+#             medicament_id = medicm_data.get('medicament')
+#             quantity = medicm_data.get('qnt')
+#             #medicamentname = medicm_data.get('MedicamentName')
+#             medicament = Medicament.objects.get(id=medicament_id)
+#             if medicament.quantite >= quantity:
+#                 medicament.quantite -= quantity
+#                 medicament.save()
+#             else:
+#                 # En cas d'échec de la réservation, annuler la création de commande et rétablir les stocks
+#                 commande.delete()
+#                 return Response({'error': f'Not enough stock available for Medicm {medicament_id}'}, status=status.HTTP_400_BAD_REQUEST)
+ 
+#         return Response({'commande': serializer.data, 'reservations': created_reservations}, status=status.HTTP_201_CREATED)
 
 
 # livreur login
@@ -432,4 +482,27 @@ class PharmacieRegistreListView(generics.ListCreateAPIView):
 #         return Response({'message': 'Token expired'}, status=status.HTTP_401_UNAUTHORIZED)
 #     except jwt.InvalidTokenError:
 #         return Response({'message': 'Invalid token'}, status=status.HTTP_401_UNAUTHORIZED)
-    
+
+# patient login
+
+# class PatientLoginView(generics.CreateAPIView):
+#     serializer_class = UserSerializerLogin
+#     aserializer_class = PatientSerializer
+#     def post(self, request, *args, **kwargs):
+#         username = request.data.get('username')
+#         password = request.data.get('password')
+#         if not username or not password:
+#             return Response({'detail': 'Please provide both username and password.'}, status=status.HTTP_400_BAD_REQUEST)
+#         user = authenticate(username=username, password=password)
+#         print(user)
+#         if user is not None:  
+#             token = AuthToken.objects.create(user)
+#             return Response({
+#                 'token': token[1],
+#                 'user': self.aserializer_class(user.patient).data,
+#             }, status=status.HTTP_200_OK)
+#         else:
+#             return Response({'detail': 'Invalid credentials.'}, status=status.HTTP_401_UNAUTHORIZED)
+
+
+

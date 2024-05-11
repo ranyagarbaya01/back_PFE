@@ -22,7 +22,9 @@ class Pharmacie (models.Model):
     email=models.CharField(max_length=50)
     heure_ouv=models.DateTimeField(default=timezone.now)
     heure_ferm=models.DateTimeField(default=timezone.now)
-    adresse=models.CharField(max_length=50, default="", blank=True, null=True)
+    codesecurite = models.IntegerField(blank=True, null=True)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     medicament=models.ManyToManyField('Medicament', through='Pharma_Stock_Medic', related_name='medicament')
     role=models.CharField(max_length=30, default="pharmacie", blank=True, null=True) 
 
@@ -32,7 +34,7 @@ class Medicament (models.Model):
     nom=models.CharField(max_length=30)
     medic_image = models.ImageField(upload_to='medic_images/', blank=True, null=True)
     categorie = models.ForeignKey('Categorie', on_delete=models.CASCADE, related_name='medicaments', default="")
-    nompharmacie=models.CharField(max_length=30, default="")
+    pharmaciemedic= models.ForeignKey(Pharmacie, on_delete=models.CASCADE, related_name="pharmaciemedicament" , default="")
     prix=models.FloatField(default=0)
     temps_liv=models.DateTimeField(default=timezone.now)
     quantite = models.IntegerField(default=0)   # stock = stock - qnt
@@ -73,19 +75,21 @@ class Categorie (models.Model):
     
 # commande model
 class Commande (models.Model):
-    patient = models.ForeignKey(Patient, on_delete=models.CASCADE,default=1)
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name="patient" )#hhhhhhhh makch kaada t7ot fel patient howa el user li 3amel login, el logic hedheka aslan mch mawjoud, lazem fel fonction mta3 el creation tzidha dkika
     cammande_reserved_medic = models.ManyToManyField('Medicament', through='Ligne_Commande', related_name='cammande_reserved_medic')
     cnam=models.ImageField(upload_to='cnam_img/', blank=True, null=True)
     description=models.CharField(max_length=30, default="", null=True)
     confirmadresse=models.CharField(max_length=30, default="", null=True)
     ordonnance=models.ImageField(upload_to='ordonnance_img/', null=True, default="")
-    pharmacielocation=models.CharField(max_length=30 , default="",  null=True)
+    pharmacies= models.ForeignKey(Pharmacie, on_delete=models.CASCADE, related_name="pharmaciecommande" , default="")
 
 # ligne_commande model
 class Ligne_Commande(models.Model):
     medicament = models.ForeignKey(Medicament, on_delete=models.CASCADE, related_name='reservations',default="1")
     commande = models.ForeignKey(Commande, on_delete=models.CASCADE, related_name='reservations',default="")
     qnt = models.IntegerField(default=0)
+    pharmacielocation=models.CharField(max_length=30 , default="",  null=True)
+    confirmadresse=models.CharField(max_length=30, default="", null=True)
 
     def __str__(self):
         return f"{self.qnt} units commande for {self.medicament} in {self.commande}"
